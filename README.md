@@ -2,7 +2,7 @@
 
 ## Common system settings
 - Screen refresh rate: 60 Hz
-- Audio buffer: 128 samples
+- Audio buffer: 512 samples (128 will not work reliably on all machines)
 
 ## Test 1 - Stimulus presentation latencies
 - Wait once 10 s before starting the procedure to allow equipment to be initialized
@@ -12,11 +12,11 @@
 
 ### Keyboard
 - Wait once 10 s before starting the procedure to allow equipment to be initialized
-- Present a black screen for 200 ms (12 frames), followed by a white square (top center of screen, 400 x 400 pixels), and measure (and log) the subsequent keyboard response time; repeat this 1000 times
+- Present a black screen for 300 ms (18 frames), followed by a white square (top center of screen, 400 x 400 pixels) for 200 ms (12 frames), and measure (and log) the subsequent keyboard response time; repeat this 1000 times
 
 ### Serial port (PsychoPy, OpenSesame & Expyriment only)
 - Wait once 10 s before starting the procedure to allow equipment to be initialized
-- Present a black screen for 200 ms (12 frames), followed by a white square (top center of screen, 400 x 400 pixels), and measure (and log) the subsequent serial port response time; repeat this 1000 times
+- Present a black screen for 300 ms (18 frames), followed by a white square (top center of screen, 400 x 400 pixels) for 200 ms (12 frames), and measure (and log) the subsequent serial port response time; repeat this 1000 times
 
 # External equipment
 
