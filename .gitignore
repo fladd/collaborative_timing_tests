@@ -1,0 +1,16 @@
+# Python
+*.py[cod]
+*.egg
+*.egg-info
+__pycache__
+
+# Vim
+*.swp
+
+# macOS
+.DS_Store
+
+# Expyriment
+implementations/expyriment/test_suite_protocol.xpp
+implementations/expyriment/data/
+implementations/expyriment/events/
