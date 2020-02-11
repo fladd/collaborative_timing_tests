@@ -21,16 +21,14 @@
 # External equipment
 
 ## Test 1 - Stimulus presentation latencies
+- Record audio onsets and offsets at speaker jack
+- Record visual onsets and offsets on screen
 - Record the TTL pulses
 
 ## Test 2 - Response time latencies
 
 ### Keyboard
-- Record audio onsets and offsets at speaker jack
-- Record visual onsets and offsets on screen
 - Trigger keyboard response 100 ms after onset of white square at top center of screen
 
 ### Serial port (PsychoPy, OpenSesame & Expyriment only)
-- Record audio onsets and offsets at speaker jack
-- Record visual onsets and offsets on screen
 - Trigger serial port response 100 ms after onset of white square at top center of screen
