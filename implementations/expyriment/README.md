@@ -1,6 +1,6 @@
 # Step 1: Install Expyriment
 
-1. Download and install Python 3.8 from https://python.org.
+1. Download and install Python 3.7 from https://python.org.
 
 2. Create a virtual environment for Expyriment:
    ```
