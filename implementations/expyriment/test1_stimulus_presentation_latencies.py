@@ -31,7 +31,7 @@ os.remove("test_suite_protocol.xpp")
 main = xpy.design.Block()
 trial = xpy.design.Trial()
 trial.add_stimulus(xpy.stimuli.BlankScreen())
-trial.add_stimulus(xpy.stimuli.Tone(200, frequency=440))
+trial.add_stimulus(xpy.stimuli.Tone(200, frequency=440. amplitude=1))
 trial.add_stimulus(xpy.stimuli.Rectangle((400, 400), colour=(255, 255, 255),
                                position=(0, exp.screen.size[1] / 2 - 200)))
 trial.preload_stimuli()
