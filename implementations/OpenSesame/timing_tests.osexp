@@ -1,0 +1,239 @@
+---
+API: 2.1
+OpenSesame: 3.3.0a65
+Platform: posix
+---
+set width 1024
+set uniform_coordinates yes
+set title timing_tests
+set subject_parity even
+set subject_nr 0
+set start experiment
+set sound_sample_size -16
+set sound_freq 48000
+set sound_channels 2
+set sound_buf_size 1024
+set sampler_backend legacy
+set round_decimals 2
+set mouse_backend xpyriment
+set keyboard_backend legacy
+set height 768
+set fullscreen no
+set form_clicks no
+set foreground white
+set font_underline no
+set font_size 18
+set font_italic no
+set font_family mono
+set font_bold no
+set experiment_path "/home/sebastiaan/git/collaborative_timing_tests/implementations/OpenSesame"
+set disable_garbage_collection yes
+set description "The main experiment item"
+set coordinates uniform
+set compensation 0
+set color_backend legacy
+set clock_backend legacy
+set canvas_backend xpyriment
+set background black
+
+define sketchpad black_screen1
+	set duration 290
+	set description "Montrer des stimuli visuels"
+
+define sketchpad black_screen2
+	set duration 0
+	set description "Montrer des stimuli visuels"
+
+define sequence experiment
+	set flush_keyboard yes
+	set description "Exécute séquentiellement plusieurs items"
+	run settings always
+	run select_test always
+	run select_test_response always
+	run stimulus_presentation_loop "[response_select_test_response] = 1"
+	run response_time_loop "[response_select_test_response] = 2"
+	run serial_time_loop "[response_select_test_response] = 3"
+
+define keyboard_response keyboard_response
+	set timeout 190
+	set flush yes
+	set event_type keypress
+	set duration keypress
+	set description "Collects keyboard responses"
+
+define logger logger
+	set description "Logs experimental data"
+	set auto_log no
+	log response_time
+	log time_black_screen1
+	log time_black_screen2
+	log time_white_screen
+	log response
+	log canvas_backend
+	log opensesame_version
+
+define loop response_time_loop
+	set source table
+	set repeat 1000
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run response_time_sequence
+
+define sequence response_time_sequence
+	set flush_keyboard yes
+	set description "Exécute séquentiellement plusieurs items"
+	run black_screen1 always
+	run white_screen always
+	run keyboard_response always
+	run black_screen2 always
+	run logger always
+
+define sketchpad select_test
+	set duration 0
+	set description "Montrer des stimuli visuels"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Backend: [canvas_backend]<br /><br />Select a timing test<br /><br />1) Stimulus presentation<br />2) Response time (keyboard)<br />3) Response time (serial button box)" x=0 y=0 z_index=0
+
+define keyboard_response select_test_response
+	set timeout infinite
+	set flush yes
+	set event_type keypress
+	set duration keypress
+	set description "Collects keyboard responses"
+	set allowed_responses "1;2;3"
+
+define inline_script serial_response
+	set description "Executes Python code"
+	___run__
+	if TLL_ACTIVE:
+	    var.response = buttonbox.read()
+	    var.response_time = clock.time() - var.time_white_screen
+	__end__
+	set _prepare ""
+
+define loop serial_time_loop
+	set source table
+	set repeat 1000
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run serial_time_sequence
+
+define sequence serial_time_sequence
+	set flush_keyboard yes
+	set description "Exécute séquentiellement plusieurs items"
+	run black_screen1 always
+	run white_screen always
+	run serial_response always
+	run black_screen2 always
+	run logger always
+
+define inline_script settings
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	import serial
+	
+	CALM_DOWN = False  # Set to True to wait for 10 s before start
+	TTL_ACTIVE = False  # Set to True to activate TTL pulses
+	TTL_PORT = '/dev/ttyS0'
+	TTL_BAUDRATE = 9600
+	TTL_PARITY = serial.PARITY_NONE
+	TTL_STOPBITS = serial.STOPBITS_ONE
+	BBOX_ACTIVE = False
+	BBOX_PORT = '/dev/ttyS1'  # Set to True to activate Buttobox input
+	BBOX_BAUDRATE = 9600
+	BBOX_TIMEOUT = 190
+	BBOX_PARITY = serial.PARITY_NONE
+	BBOX_STOPBITS = serial.STOPBITS_ONE
+	
+	PULSE_ON = bytes([255])
+	PULSE_OFF = bytes([0])
+	
+	
+	if TTL_ACTIVE:
+	    tll = serial.Serial(
+	        port=TTL_PORT,
+	        baudrate=TTL_BAUDRATE,
+	        parity=TTL_PARITY,
+	        stopbits=TTL_STOPBITS
+	    )
+	    ttl.open()
+	if BBOX_ACTIVE:
+	    bbox = serial.Serial(
+	        port=BBOX_PORT,
+	        baudrate=BBOX_BAUDRATE,
+	        parity=BBOX_PARITY,
+	        stopbits=BBOX_STOPBITS
+	    )
+	    bbox.timeout = BBOX_TIMEOUT
+	    bbox.open()
+	
+	if CALM_DOWN:
+	    clock.sleep(10000)  # Wait for things to calm down
+	__end__
+
+define loop stimulus_presentation_loop
+	set source table
+	set repeat 1000
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run stimulus_presentation_sequence
+
+define sequence stimulus_presentation_sequence
+	set flush_keyboard yes
+	set description "Exécute séquentiellement plusieurs items"
+	run black_screen1 always
+	run white_screen always
+	run tone always
+	run ttl255 always
+	run black_screen2 always
+	run ttl0 always
+	run logger always
+
+define synth tone
+	set volume 1
+	set pan 0
+	set osc sine
+	set length 200
+	set freq 440
+	set duration 0
+	set description "A basic sound synthesizer"
+	set decay 0
+	set attack 0
+
+define inline_script ttl0
+	set description "Executes Python code"
+	___run__
+	if TTL_ACTIVE:
+	    ttl.write(PULSE_OFF)
+	__end__
+	set _prepare ""
+
+define inline_script ttl255
+	set description "Executes Python code"
+	___run__
+	if TTL_ACTIVE:
+	    ttl.write(PULSE_ON)
+	clock.sleep(190)
+	__end__
+	set _prepare ""
+
+define sketchpad white_screen
+	set duration 0
+	set description "Montrer des stimuli visuels"
+	draw rect color=white fill=1 h=400 penwidth=1 show_if=always w=400 x=-200 y=-384 z_index=0
+
