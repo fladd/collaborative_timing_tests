@@ -1,46 +1,23 @@
-import os
-
 import expyriment as xpy
 
-
-exp = xpy.design.Experiment("Test 1 - Stimulus presentation latencies")
-xpy.control.defaults.audiosystem_buffer_size = 128
-xpy.control.defaults.audiosystem_sample_rate = 44100 # default in Expyrimnet
-xpy.control.defaults.audiosystem_bit_depth = -16 # default in Expyrimnet
-xpy.control.initialize(exp)
-
-# TEST SUITE
-xpy.control.run_test_suite()
-# Get refresh rate and serial port settings from test suite results
-if not os.path.exists("test_suite_protocol.xpp"):
-    raise RuntimeError("No test suite protocol found!")
-with open("test_suite_protocol.xpp") as f:
-    protocol = f.readlines()
-    for line in protocol:
-        if line.startswith("testsuite_visual_sync_refresh_rate:"):
-            SCREEN_REFRESH_RATE = float(line.split()[1])
-        elif line.startswith("testsuite_serial_port:"):
-            TTL_PORT = line.split()[1]
-        elif line.startswith("testsuite_serial_baudrate:"):
-            TTL_BAUDRATE = int(line.split()[1])
-        elif line.startswith("testsuite_serial_parity:"):
-            TTL_PARITY = line.split()[1]
-        elif line.startswith("testsuite_serial_stopbits:"):
-            TTL_STOPBITS = int(line.split()[1])
-os.remove("test_suite_protocol.xpp")
+# SETTINGS
+TTL_PORT = "COM3"
+TTL_BAUDRATE = 115200
+TTL_PARITY = "N"
+TTL_STOPBITS = 1
+SCREEN_REFRESH_RATE = 60
+xpy.control.defaults.audiosystem_buffer_size = 1024
 
 # DESIGN
-main = xpy.design.Block()
-trial = xpy.design.Trial()
-trial.add_stimulus(xpy.stimuli.BlankScreen())
-trial.add_stimulus(xpy.stimuli.Tone(200, frequency=440, amplitude=1))
-trial.add_stimulus(xpy.stimuli.Rectangle((400, 400), colour=(255, 255, 255),
-                               position=(0, exp.screen.size[1] / 2 - 200)))
-trial.preload_stimuli()
-main.add_trial(trial, copies=1000)
-exp.add_block(main)
-for line in protocol:
-    exp.add_experiment_info(line)
+exp = xpy.design.Experiment("Test 1 - Stimulus presentation latencies")
+xpy.control.initialize(exp)
+rect = xpy.stimuli.Rectangle((400, 400), colour=(255, 255, 255),
+                             position=(0, exp.screen.size[1] / 2 - 200))
+tone = xpy.stimuli.Tone(200, frequency=440, amplitude=1)
+blank = xpy.stimuli.BlankScreen()
+rect.preload()
+tone.preload()
+blank.preload()
 
 # IO
 ttl = xpy.io.MarkerOutput(xpy.io.SerialPort(TTL_PORT, baudrate=TTL_BAUDRATE,
@@ -48,18 +25,28 @@ ttl = xpy.io.MarkerOutput(xpy.io.SerialPort(TTL_PORT, baudrate=TTL_BAUDRATE,
                                             stopbits=TTL_STOPBITS))
 
 # RUN
+data = []
 xpy.control.start()
 xpy.stimuli.TextLine("Starting...").present()
 exp.clock.wait(10000)
-for trial in exp.blocks[0].trials:
-    trial.stimuli[0].present()
+print("".join([chr(x) for x in ttl.interface.read_input()]))
+blank.present()
+for x in range(10):
+    rect.present()
+    exp.clock.reset_stopwatch()
     ttl.send(255)
-    trial.stimuli[1].present()
-    exp.clock.wait(200 - 1000 / SCREEN_REFRESH_RATE / 2)
-    trial.stimuli[2].present()
+    tone.present()
+    exp.clock.wait(2000 - exp.clock.stopwatch_time - 1000 / SCREEN_REFRESH_RATE / 2)
+    blank.present()
+    exp.clock.reset_stopwatch()
     ttl.send(0)
-    exp.clock.wait(300 - 1000 / SCREEN_REFRESH_RATE / 2)
-exp.screen.update()
-ttl.send(0)
+    data.append(ttl.interface.read_line())
+    print(data[-1])
+    exp.clock.wait(3000 - exp.clock.stopwatch_time - 1000 / SCREEN_REFRESH_RATE / 2)
 
-xpy.control.end()
+# WRITE DATA FROM ARDUINO
+exp.add_data_variable_names(["Serial", "LightOn", "LightOff", "Sound"])
+for line in data:
+    exp.data.add([int(x) for x in line.split(b" ")[1::2]])
+
+xpy.control.end() 
