@@ -10,9 +10,9 @@ set subject_parity even
 set subject_nr 0
 set start experiment
 set sound_sample_size -16
-set sound_freq 48000
+set sound_freq 44100
 set sound_channels 2
-set sound_buf_size 1024
+set sound_buf_size 512
 set sampler_backend legacy
 set round_decimals 2
 set mouse_backend xpyriment
