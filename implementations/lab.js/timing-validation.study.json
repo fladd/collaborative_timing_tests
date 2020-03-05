@@ -1,0 +1,173 @@
+{
+  "components": {
+    "1": {
+      "id": "1",
+      "type": "lab.html.Screen",
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "responses": {
+        "rows": [
+          [
+            "continue",
+            "keypress",
+            "",
+            ""
+          ]
+        ]
+      },
+      "messageHandlers": {
+        "rows": [
+          [
+            {
+              "title": "Setup study functions",
+              "message": "before:prepare",
+              "code": "// Setup study from window URL parameters, if available\nconst urlParams = new URLSearchParams(window.location.search)\nthis.parameters._collect_response = urlParams.get('response') === 'true'\n\n// Generate additional rendering load, if desired\nconst squares = 1\n\n// Setup stimulus generation function\nwindow.makeStimuli = function(\n  collect_response=this.parameters._collect_response, \n  trial_length=1000\n) {\n\n  console.log('Building benchmark study with ...')\n  console.log('collect_response', collect_response)\n  console.log('trial_length', trial_length)\n\n  // ---------------------------------------------------------------------------\n  const make_square = (fill='#ffffff') => ({\n    \"type\": \"rect\",\n    \"left\": 0, \"top\": -150,\n    \"width\": \"300\", \"height\": \"300\",\n    \"fill\": fill\n  })\n\n  const content_black = new Array(squares)\n    .fill(0)\n    .map(\n      () => make_square('#000000')\n    )\n\n  const content_white = new Array(squares)\n    .fill(0)\n    .map(\n      () => make_square('#ffffff')\n    )\n\n  const make_screen = (title, content, timeout, responses={}, timeline=[]) =>\n    new lab.canvas.Screen({\n      title: title,\n      content: content,\n      timeout: timeout,\n      responses: responses,\n      timeline: timeline,\n      //debug: true,\n    })\n\n  var trial_content = []\n\n  // Assemble trial\n  trial_content.push(\n    make_screen(\n      'buffer',\n      [ make_square('#000000') ],\n      10000\n    )\n  )\n\n  Array(trial_length).fill(0)\n    .forEach((_, i) => {\n      const title   = i % 2 == 0 ? 'black' : 'white'\n      const content = i % 2 == 0 ? content_black : content_white\n      const l_screentime = i % 2 == 0 \n        ? 300\n        : (collect_response ? undefined : 200)\n      const l_responses = collect_response && i % 2 !== 0 \n        ? { 'keydown': 'response' }\n        : {}\n      const l_timeline = collect_response || i % 2 == 0 \n        ? []\n        : [\n            {\n              \"type\": \"oscillator\",\n              \"start\": 0,\n              \"stop\": 200,\n              \"priority\": 0,\n              \"payload\": {\n                \"gain\": 1,\n                \"pan\": 0,\n                \"rampUp\": 0,\n                \"rampDown\": 0\n              }\n            }\n          ]\n\n      trial_content.push(\n        make_screen(\n          title,\n          content,\n          l_screentime,\n          l_responses,\n          l_timeline\n        )\n      )\n    })\n\n    trial_content.push(\n      make_screen(\n        'buffer',\n        [ make_square('#000000') ],\n        5000\n      )\n    )\n\n  return new lab.flow.Sequence({\n    title: 'sequence',\n    content: trial_content\n  })\n}"
+            }
+          ],
+          [
+            {
+              "title": "",
+              "message": "after:end",
+              "code": "// Substitute URL parameters if there is no form content\nthis.state.collect_response = this.state._collect_response || false"
+            }
+          ]
+        ]
+      },
+      "title": "Settings",
+      "timeout": "",
+      "content": "<main class=\"content-vertical-center content-horizontal-center\">\n  <div>\n    Please press a key to begin\n  </div>\n</main>",
+      "files": {
+        "rows": []
+      },
+      "_tab": "Scripts"
+    },
+    "2": {
+      "id": "2",
+      "type": "lab.canvas.Frame",
+      "context": "<!-- The loop logic is filled by script -->\n<canvas />",
+      "contextSelector": "canvas",
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "responses": {
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "messageHandlers": {
+        "rows": [
+          [
+            {
+              "title": "Setup content",
+              "message": "before:prepare",
+              "code": "// Setup file download name\nthis.parent.plugins.plugins.forEach((p, i) => {\n  if (p instanceof lab.plugins.Download) {\n    const ua = new UAParser()\n    p.filePrefix = \n      `labjs-validation-${ ua.getBrowser().name }-` +\n      `${ ua.getBrowser().version }--` +\n      `${ ua.getOS().name }-${ ua.getOS().version }--` +\n      (this.state.collect_response ? 'response' : 'presentation')\n  }\n})\n\n// Make stimuli\nthis.options.content = window.makeStimuli(\n  Boolean(this.state.collect_response)\n)"
+            }
+          ]
+        ]
+      },
+      "title": "Validation loop",
+      "tardy": true,
+      "timeout": "",
+      "files": {
+        "rows": []
+      },
+      "_tab": "Scripts"
+    },
+    "root": {
+      "id": "root",
+      "title": "root",
+      "type": "lab.flow.Sequence",
+      "children": [
+        "1",
+        "2"
+      ],
+      "parameters": {
+        "rows": [
+          [
+            {
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        ]
+      },
+      "plugins": [
+        {
+          "type": "lab.plugins.Metadata"
+        }
+      ],
+      "metadata": {
+        "title": "Timing validation",
+        "description": "",
+        "repository": "https://github.com/FelixHenninger/lab.js/tree/master/examples",
+        "contributors": "Felix Henninger (mailbox@felixhenninger.com) [https://felixhenninger.com]"
+      },
+      "files": {
+        "rows": []
+      }
+    }
+  },
+  "version": [
+    19,
+    1,
+    2
+  ],
+  "files": {
+    "files": {
+      "index.html": {
+        "content": "data:text/html,%3C!doctype%20html%3E%0A%3Chtml%3E%0A%3Chead%3E%0A%20%20%3Cmeta%20charset%3D%22utf-8%22%3E%0A%20%20%3Ctitle%3EExperiment%3C%2Ftitle%3E%0A%20%20%3C!--%20lab.js%20library%20and%20default%20styles%20--%3E%0A%20%20%3Cscript%20src%3D%22lib%2Flab.js%22%20data-labjs-script%3D%22library%22%3E%3C%2Fscript%3E%0A%20%20%3Cscript%20src%3D%22lib%2Flab.fallback.js%22%20data-labjs-script%3D%22fallback%22%3E%3C%2Fscript%3E%0A%20%20%3Clink%20rel%3D%22stylesheet%22%20href%3D%22lib%2Flab.css%22%3E%0A%20%20%3C!--%20external%20libraries%20--%3E%0A%20%20%3Cscript%20src%3D%22https%3A%2F%2Funpkg.com%2Fua-parser-js%400.7.19%2Fsrc%2Fua-parser.js%22%3E%3C%2Fscript%3E%0A%20%20%3C!--%20study%20code%20and%20styles%20--%3E%0A%20%20%3Cscript%20defer%20src%3D%22script.js%22%3E%3C%2Fscript%3E%0A%20%20%3Clink%20rel%3D%22stylesheet%22%20href%3D%22style.css%22%3E%0A%3C%2Fhead%3E%0A%3Cbody%3E%0A%20%20%3C!--%20If%20you'd%20rather%20have%20a%20container%20with%20a%20fixed%20width%0A%20%20%20%20%20%20%20and%20variable%20height%2C%20try%20removing%20the%20fullscreen%20class%20below%20--%3E%0A%20%20%3Cdiv%20class%3D%22container%20fullscreen%20frameless%22%20data-labjs-section%3D%22main%22%3E%0A%20%20%20%20%3Cmain%20class%3D%22content-vertical-center%20content-horizontal-center%22%3E%0A%20%20%20%20%20%20%3Cdiv%3E%0A%20%20%20%20%20%20%20%20%3Ch2%3ELoading%20Experiment%3C%2Fh2%3E%0A%20%20%20%20%20%20%20%20%3Cp%3EThe%20experiment%20is%20loading%20and%20should%20start%20in%20a%20few%20seconds%3C%2Fp%3E%0A%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fmain%3E%0A%20%20%3C%2Fdiv%3E%0A%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A",
+        "source": "library"
+      },
+      "style.css": {
+        "content": "data:text/css,%2F*%20Please%20define%20your%20custom%20styles%20here%20*%2F%0Abody%20%7B%0A%20%20background-color%3A%20black%3B%0A%20%20color%3A%20white%3B%0A%7D%0A%0A.popover%20%7B%0A%20%20color%3A%20black%3B%0A%7D",
+        "source": "library"
+      }
+    },
+    "bundledFiles": {
+      "lib/lab.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.js.map": {
+        "type": "text/plain"
+      },
+      "lib/lab.css": {
+        "type": "text/css"
+      },
+      "lib/loading.svg": {
+        "type": "image/svg+xml"
+      },
+      "lib/lab.fallback.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js": {
+        "type": "application/javascript"
+      },
+      "lib/lab.legacy.js.map": {
+        "type": "text/plain"
+      }
+    }
+  }
+}
