@@ -1,52 +1,53 @@
 import expyriment as xpy
 
-# SETTINGS
-TTL_PORT = "COM3"
-TTL_BAUDRATE = 115200
-TTL_PARITY = "N"
-TTL_STOPBITS = 1
-SCREEN_REFRESH_RATE = 60
-xpy.control.defaults.audiosystem_buffer_size = 1024
+from config import settings, process_ttl_data
 
-# DESIGN
+
+HALF_REFRESH_CYCLE = 1000 / settings["SCREEN_REFRESH_RATE"] / 2
+
 exp = xpy.design.Experiment("Test 1 - Stimulus presentation latencies")
+xpy.control.defaults.open_gl = settings["open_gl"]
+xpy.control.defaults.audiosystem_buffer_size = settings["audio_buffer_size"]
 xpy.control.initialize(exp)
+
+# STIMULI
 rect = xpy.stimuli.Rectangle((400, 400), colour=(255, 255, 255),
                              position=(0, exp.screen.size[1] / 2 - 200))
-tone = xpy.stimuli.Tone(200, frequency=440, amplitude=1)
+tone = xpy.stimuli.Tone(200, frequency=440,
+                        samplerate=settings["audio_sample_rate"], amplitude=1)
 blank = xpy.stimuli.BlankScreen()
 rect.preload()
 tone.preload()
 blank.preload()
 
 # IO
-ttl = xpy.io.MarkerOutput(xpy.io.SerialPort(TTL_PORT, baudrate=TTL_BAUDRATE,
-                                            parity=TTL_PARITY,
-                                            stopbits=TTL_STOPBITS))
+ttl = xpy.io.SerialPort(settings["ttl_port"],
+                        baudrate=settings["ttl_baudrate"],
+                        parity=settings["ttl_parity"],
+                        stopbits=settings["ttl_stopbits"])
 
 # RUN
-data = []
 xpy.control.start()
 xpy.stimuli.TextLine("Starting...").present()
 exp.clock.wait(10000)
-print("".join([chr(x) for x in ttl.interface.read_input()]))
 blank.present()
-for x in range(10):
+ttl.clear()
+data = []
+for x in range(1000):
     rect.present()
     exp.clock.reset_stopwatch()
     ttl.send(255)
     tone.present()
-    exp.clock.wait(2000 - exp.clock.stopwatch_time - 1000 / SCREEN_REFRESH_RATE / 2)
+    exp.clock.wait(200 - exp.clock.stopwatch_time - HALF_REFRESH_CYCLE)
     blank.present()
     exp.clock.reset_stopwatch()
     ttl.send(0)
-    data.append(ttl.interface.read_line())
-    print(data[-1])
-    exp.clock.wait(3000 - exp.clock.stopwatch_time - 1000 / SCREEN_REFRESH_RATE / 2)
+    exp.clock.wait(300 - exp.clock.stopwatch_time - HALF_REFRESH_CYCLE)
+    data.append(ttl.read_input())
 
-# WRITE DATA FROM ARDUINO
-exp.add_data_variable_names(["Serial", "LightOn", "LightOff", "Sound"])
-for line in data:
-    exp.data.add([int(x) for x in line.split(b" ")[1::2]])
+# SAVE DATA
+for k,v in xpy.misc.get_system_info().update(settings).items():
+    exp.data.add_experiment_info(f"{k}: {v}")
+config.process_ttl_data(exp=exp, data=data)
 
-xpy.control.end() 
+xpy.control.end()
