@@ -1,10 +1,10 @@
 # Test implementation
 
 ## Common system settings
-- **Screen refresh rate**
-  We are heading for 60 Hz, if possible.
-- **Audio**
-  We are heading for a sample rate of 44100 Hz if possible, with a fixed bit depth of 16.
+- **Screen refresh rate**  
+  60 Hz, if possible
+- **Audio**  
+  44100 Hz if possible, with a fixed bit depth of 16
 
 ## Test 1 - Stimulus presentation latencies
 - Wait once 10 s before starting the procedure to allow equipment to be initialized
