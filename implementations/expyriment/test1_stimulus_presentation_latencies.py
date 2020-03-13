@@ -1,12 +1,12 @@
 import expyriment as xpy
 
-from config import settings, process_ttl_data
+from config import settings, write_ttl_data
 
 
-HALF_REFRESH_CYCLE = 1000 / settings["SCREEN_REFRESH_RATE"] / 2
+HALF_REFRESH_CYCLE = 1000 / settings["screen_refresh_rate"] / 2
 
 exp = xpy.design.Experiment("Test 1 - Stimulus presentation latencies")
-xpy.control.defaults.open_gl = settings["open_gl"]
+xpy.control.defaults.open_gl = settings["screen_open_gl"]
 xpy.control.defaults.audiosystem_buffer_size = settings["audio_buffer_size"]
 xpy.control.initialize(exp)
 
@@ -46,8 +46,10 @@ for x in range(1000):
     data.append(ttl.read_input())
 
 # SAVE DATA
-for k,v in xpy.misc.get_system_info().update(settings).items():
+info = xpy.misc.get_system_info()
+info.update(settings)
+for k,v in info.items():
     exp.data.add_experiment_info(f"{k}: {v}")
-config.process_ttl_data(exp=exp, data=data)
+write_ttl_data(exp=exp, data=data)
 
 xpy.control.end()

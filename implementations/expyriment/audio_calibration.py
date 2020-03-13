@@ -14,7 +14,7 @@ from config import settings
 
 
 exp = xpy.control.initialize()
-tone = xpy.stimuli.Tone(1000, frequency=440,
+tone = xpy.stimuli.Tone(3000, frequency=440,
                         samplerate=settings["audio_sample_rate"], amplitude=1)
 xpy.stimuli.TextScreen("Audio calibration", "Press [ENTER] to start").present()
 exp.keyboard.wait(xpy.misc.constants.K_RETURN)

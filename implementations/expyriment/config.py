@@ -21,5 +21,5 @@ def write_ttl_data(**kwargs):
     kwargs["exp"].add_data_variable_names(
         ["Serial", "LightOn", "LightOff", "Sound"])
     for line in kwargs["data"]:
-        line = [chr(x) for x in line].strip()
-        kwargs["exp"].data.add([int(x) for x in line.split(b" ")[1::2]])
+        line = "".join([chr(x) for x in line]).strip()
+        kwargs["exp"].data.add([int(x) for x in line.split(" ")[1::2]])
